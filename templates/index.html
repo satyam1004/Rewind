@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163c2d">
+  <meta name="rewind-token" content="{{ csrf }}">
+  <title>Rewind — Your personal music library</title>
+  <link rel="icon" href="{{ url_for('static', filename='record.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='listener-state.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+
+<body data-admin="{{ 'true' if admin else 'false' }}">
+  <a class="skip" href="#main">Skip to library</a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Rewind home"><span class="brand-icon">↞</span> rewind<span
+          class="brand-dot">®</span></a>
+      <p class="brand-note">Good music stays with you.</p>
+      <nav aria-label="Library navigation">
+        <button class="nav-item active" id="all-library" aria-current="page"><span aria-hidden="true">▤</span> My
+          library <span id="nav-count" class="count">0</span></button>
+        <button class="nav-item" id="favorites-nav"><span aria-hidden="true">♡</span> Favorites <span
+            id="favorite-count" class="count">0</span></button>
+        <button class="nav-item" id="history-nav" hidden><span aria-hidden="true">↻</span> Most played</button>
+        <button class="nav-item" id="upload-nav" {% if not admin %}hidden{% endif %}><span aria-hidden="true">＋</span>
+          Add music</button>
+      </nav>
+      <div class="shelf-note">
+        <div class="mini-record" aria-hidden="true"></div>
+        <p>A little time travel.<br>A lot of good music.</p><span>Your collection. Your soundtrack.</span>
+      </div>
+      <div class="local-note"><span class="status-dot"></span> Stored</div>
+    </aside>
+    <main id="main">
+      <header class="topbar"><span class="topbar-label">The personal collection</span><label class="search"><span
+            aria-hidden="true">⌕</span><input type="search" id="search" placeholder="Search songs, artists, albums…"
+            aria-label="Search songs, artists, or albums"></label><button class="button primary" id="add-music" {% if
+          not admin %}hidden{% endif %}>＋ Add music</button><button class="text-button" id="listener-access">Listener
+          sign in</button><button class="text-button" id="admin-access">{{ 'Sign out' if admin else 'Admin login'
+          }}</button></header>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="edition">EST. IN YOUR MEMORIES</p>
+          <h1 id="page-title">Always worth<br>another listen.</h1>
+          <p class="intro-copy">The songs you grew up with.<br>All together, right where they belong.</p><button
+            class="button dark" id="play-all" disabled><span aria-hidden="true">▶</span> Play collection</button>
+        </div>
+        <div class="record-scene" aria-hidden="true">
+          <div class="record-sleeve"><span>THE<br>GOOD<br>YEARS.</span><small>1980 — 2030<br>PERSONAL ARCHIVE · VOL.
+              01</small></div>
+          <div class="vinyl">
+            <div class="vinyl-label">rewind<small>SIDE A</small><i></i></div>
+          </div><span class="scene-caption">Some things never get old.</span>
+        </div>
+      </section>
+      <section class="decades" aria-label="Browse by decade">
+        <button class="decade decade-80" data-decade="1980" aria-pressed="false"><span class="decade-top">The mixtape
+            years <span aria-hidden="true">↗</span></span><strong>80<span>s</span></strong><span class="decade-bottom"
+            id="count-1980">0 songs</span></button>
+        <button class="decade decade-90" data-decade="1990" aria-pressed="false"><span class="decade-top">On repeat
+            <span aria-hidden="true">↗</span></span><strong>90<span>s</span></strong><span class="decade-bottom"
+            id="count-1990">0 songs</span></button>
+        <button class="decade decade-20" data-decade="2000" aria-pressed="false"><span class="decade-top">The burned-CD
+          era <span aria-hidden="true">↗</span></span><strong>20<span>s</span></strong><span class="decade-bottom"
+            id="count-2000">0 songs</span></button>
+      </section>
+      <section class="moods" aria-labelledby="moods-heading">
+        <div class="section-heading">
+          <div>
+            <h2 id="moods-heading">A song for every mood.</h2>
+            <p>Find your next listen.</p>
+          </div>
+        </div>
+        <div class="mood-options">
+          <button class="mood-option" data-category="ghazal" aria-pressed="false"><span class="mood-symbol"
+              aria-hidden="true">♬</span><span><strong>Ghazal</strong><small>Poetry, set to music</small></span><span
+              class="mood-count" id="category-count-ghazal">0 songs</span></button>
+
+          <button class="mood-option" data-category="love" aria-pressed="false"><span class="mood-symbol"
+              aria-hidden="true">♬</span><span><strong>Love</strong><small>Love In Air</small></span><span
+              class="mood-count" id="category-count-love">0 songs</span></button>
+
+          <button class="mood-option" data-category="travel" aria-pressed="false"><span class="mood-symbol"
+              aria-hidden="true">↗</span><span><strong>Travel</strong><small>For the road ahead</small></span><span
+              class="mood-count" id="category-count-travel">0 songs</span></button>
+          <button class="mood-option" data-category="party" aria-pressed="false"><span class="mood-symbol"
+              aria-hidden="true">✳</span><span><strong>Party</strong><small>Turn the evening up</small></span><span
+              class="mood-count" id="category-count-party">0 songs</span></button>
+        </div>
+      </section>
+      <section class="upload-panel" id="upload-panel" hidden aria-labelledby="upload-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="upload-title">Give your music a home.</h2>
+            <p>Choose one or more audio files. You can edit song details after adding them.</p>
+          </div><button class="icon-button" id="close-upload" aria-label="Close upload">×</button>
+        </div>
+        <form id="upload-form"><label class="drop-zone" id="drop-zone"><span class="upload-symbol"
+              aria-hidden="true">↥</span><strong>Choose audio files or drop them here</strong><span>MP3, M4A, FLAC, OGG,
+              WAV · Up to 200 MB each</span><input id="audio-files" name="file" type="file"
+              accept=".mp3,.m4a,.flac,.ogg,.wav" multiple required></label>
+          <div class="upload-bottom"><label>Release year for this batch<input name="year" id="upload-year" type="number"
+                min="1980" max="2030" value="1990" required></label><label>Category for this batch<select
+                name="category" id="upload-category">
+                <option value="love">Love</option>
+                <option value="ghazal">Ghazal</option>
+                <option value="travel">Travel</option>
+                <option value="party">Party</option>
+                <option value="">Uncategorized</option>
+              </select></label>
+            <p>Title, artist and album are read from embedded tags when available.</p><button class="button primary"
+              id="upload-submit" type="submit">Add to library</button>
+          </div>
+          <div id="upload-status" role="status"></div><progress id="upload-progress" max="100" value="0" hidden
+            aria-label="Upload progress"></progress>
+        </form>
+      </section>
+      <section class="resume-note" id="resume-note" hidden aria-label="Continue listening">
+        <p id="resume-copy"></p><button class="button primary" id="resume-listening">Resume listening</button>
+      </section>
+      <section class="library" aria-labelledby="library-heading">
+        <div class="section-heading library-heading">
+          <div>
+            <h2 id="library-heading">Your library</h2>
+            <p id="library-summary" aria-live="polite">Loading your collection…</p>
+          </div>
+          <div class="library-tools"><button class="text-button" id="open-queue" aria-haspopup="dialog">Up next <span
+                id="queue-count">0</span></button><button class="text-button" id="clear-filters" hidden>Clear
+              filters</button><label class="sort-label"><span class="sr-only">Sort songs</span><select id="sort">
+                <option value="recent">Recently added</option>
+                <option value="title">Song title</option>
+                <option value="artist">Artist</option>
+                <option value="year">Release year</option>
+              </select></label></div>
+        </div>
+        <div id="library-content" aria-busy="true">
+          <div class="loading-row"></div>
+          <div class="loading-row"></div>
+        </div>
+      </section>
+      <footer class="page-footer"><span>Made for the music that matters.</span><span>rewind / your personal
+          archive</span></footer>
+    </main>
+  </div>
+  <section class="player" aria-label="Music player">
+    <div class="now-playing">
+      <div class="player-art" id="player-art" aria-hidden="true">↞</div>
+      <div><strong id="now-title">Ready when you are</strong><span id="now-artist">Add a song to start listening</span>
+      </div><button class="icon-button" id="player-favorite" aria-label="Favorite current song" aria-pressed="false"
+        disabled>♡</button>
+    </div>
+    <div class="transport">
+      <div class="playback-buttons"><button class="icon-button secondary-control" id="shuffle" aria-label="Shuffle"
+          aria-pressed="false">⤨</button><button class="icon-button" id="previous" aria-label="Previous song"
+          disabled>⏮</button><button class="play-button" id="play-pause" aria-label="Play" disabled>▶</button><button
+          class="icon-button" id="next" aria-label="Next song" disabled>⏭</button><button
+          class="icon-button secondary-control" id="repeat" aria-label="Repeat current song"
+          aria-pressed="false">↻</button></div>
+      <div class="seek-row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" step="0.1"
+          value="0" aria-label="Seek through song" disabled><span id="duration">0:00</span></div>
+    </div>
+    <div class="volume-controls"><button class="icon-button" id="mute" aria-label="Mute"
+      aria-pressed="false">♪</button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8"
+      aria-label="Volume">
+    </div><audio id="audio" preload="metadata"></audio>
+  </section>
+  <dialog id="queue-dialog" aria-labelledby="queue-heading">
+    <div class="section-heading">
+      <h2 id="queue-heading">Up next</h2><button class="icon-button" id="close-queue"
+        aria-label="Close queue">×</button>
+    </div>
+    <p id="queue-help">Your listening order. Move songs with the arrows.</p>
+    <ol id="queue-list"></ol><button class="text-button" id="clear-queue">Clear upcoming songs</button>
+  </dialog>
+  <dialog id="account-dialog" aria-labelledby="account-heading">
+    <form id="account-form">
+      <div class="section-heading">
+        <h2 id="account-heading">Listen to the whole collection</h2><button type="button" class="icon-button"
+          id="close-account" aria-label="Close listener login">×</button>
+      </div>
+      <p id="account-description">Enjoy the free preview song. Sign in or create a free listener account to play the
+        whole collection.</p><label>Listener username<input name="username" autocomplete="username"
+          pattern="[A-Za-z0-9_]{3,32}" minlength="3" maxlength="32" required></label><label>Listener password<input
+          name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128"
+          required></label><small>Username: 3–32 letters, numbers or underscores. Password: 12–128 characters.</small>
+      <p id="account-error" class="form-error" role="alert"></p><button class="button primary" type="submit"
+        id="account-submit">Sign in</button><button class="text-button" type="button" id="account-switch">Create an
+        account</button>
+    </form>
+  </dialog>
+  <dialog id="login-dialog" aria-labelledby="login-title">
+    <form id="login-form">
+      <div class="section-heading">
+        <h2 id="login-title">Admin access</h2><button type="button" class="icon-button" id="close-login"
+          aria-label="Close admin login">×</button>
+      </div>
+      <p>Sign in to upload music and manage song details.</p><label>Username<input name="username"
+          autocomplete="username" maxlength="200" required></label><label>Password<input name="password" type="password"
+          autocomplete="current-password" maxlength="1024" required></label>
+      <p id="login-error" class="form-error" role="alert"></p><button class="button primary" type="submit">Sign
+        in</button>
+    </form>
+  </dialog>
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <div class="section-heading">
+        <h2>Song details</h2><button type="button" class="icon-button" id="close-edit"
+          aria-label="Close song details">×</button>
+      </div><label>Song title<input name="title" maxlength="200" required></label><label>Artist<input name="artist"
+          maxlength="200"></label><label>Album<input name="album" maxlength="200"></label><label>Release year<input
+          name="year" type="number" min="1980" max="2030" required></label><label>Category<select name="category">
+          <option value="love">Love</option>
+          <option value="ghazal">Ghazal</option>
+          <option value="travel">Travel</option>
+          <option value="party">Party</option>
+          <option value="">Uncategorized</option>
+        </select></label>
+      <p id="edit-error" class="form-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" id="delete-song" class="text-button danger">Delete
+          song</button><button type="submit" class="button primary">Save changes</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog">
+    <h2>Remove this song?</h2>
+    <p id="delete-copy"></p>
+    <p>This deletes the library’s copy. Your original file is unchanged.</p>
+    <div class="dialog-actions"><button id="cancel-delete" class="button">Keep song</button><button id="confirm-delete"
+        class="button destructive">Delete song</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript>
+    <p class="noscript">Enable JavaScript to upload music and use the library player.</p>
+  </noscript>
+</body>
+
+</html>
